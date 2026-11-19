@@ -9,7 +9,10 @@ import numpy as np
 from shapely.geometry import Polygon, box as sbox
 from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
-import mapbox_earcut as earcut
+try:
+    import mapbox_earcut as earcut
+except ImportError:            # 브라우저(Pyodide)에는 mapbox_earcut이 없다 → shapely로 대신
+    earcut = None
 
 
 def slabs(j):
@@ -96,7 +99,7 @@ def slab_quads(slab_list, label, color, offset=(0, 0, 0)):
             # 위·아래 뚜껑
             verts = np.concatenate([np.asarray(r.coords)[:-1] for r in rings])
             ends = np.cumsum([len(r.coords) - 1 for r in rings]).astype(np.uint32)
-            tri = earcut.triangulate_float64(verts, ends).reshape(-1, 3)
+            tri = _triangulate(verts, ends)
             for z, sgn in ((z1, 1), (z0, -1)):
                 n = np.array([0, 0, sgn], float)
                 for t in tri:
@@ -104,3 +107,26 @@ def slab_quads(slab_list, label, color, offset=(0, 0, 0)):
                     p3.append(p3[-1])
                     quads.append((np.array(p3) + off, n, color, (label, "cap", sgn, round(z, 1))))
     return quads
+
+
+def _triangulate(verts, ends):
+    """구멍 있는 다각형 → 삼각형 꼭짓점 번호 (n, 3), 모두 반시계."""
+    if earcut is not None:
+        return earcut.triangulate_float64(verts, ends).reshape(-1, 3)
+    import shapely
+    starts = np.concatenate([[0], ends[:-1]]).astype(int)
+    rings = [verts[a:b] for a, b in zip(starts, ends)]
+    poly = Polygon(rings[0], rings[1:])
+    index = {(round(float(x), 6), round(float(y), 6)): k for k, (x, y) in enumerate(verts)}
+    out = []
+    for t in shapely.get_parts(shapely.constrained_delaunay_triangles(poly)):
+        c = np.asarray(t.exterior.coords)[:3]
+        try:
+            ids = [index[(round(float(x), 6), round(float(y), 6))] for x, y in c]
+        except KeyError:
+            continue
+        a, b, d = verts[ids[0]], verts[ids[1]], verts[ids[2]]
+        if (b[0] - a[0]) * (d[1] - a[1]) - (b[1] - a[1]) * (d[0] - a[0]) < 0:
+            ids = [ids[0], ids[2], ids[1]]
+        out.append(ids)
+    return np.asarray(out, dtype=np.int64).reshape(-1, 3)

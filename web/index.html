@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>결구 레이저 적층 생성기</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>결구 레이저 적층 생성기</h1>
+  <p class="lead">세 부재 모서리 노드(드러냄 R · 숨김 H)를 판 두께로 썰어 레이저로 자를 DXF, 조립 순서도, 라이노 3dm을 만듭니다. 설치 없이 이 페이지 안에서 계산합니다.</p>
+</header>
+
+<main>
+  <section class="card" id="form-card">
+    <h2>1. 실제 값 넣기</h2>
+    <p class="hint">공차 시험편을 먼저 잘라 잰 값을 넣으세요. 모르면 기본값 그대로 두면 됩니다.</p>
+    <form id="form">
+      <label>판 두께 (mm)<input name="M3_T" type="number" step="0.01" min="1" max="20" value="3.0" required></label>
+      <label>커프, 레이저 선 폭 (mm)<input name="M3_KERF" type="number" step="0.01" min="0" max="1" value="0.2" required></label>
+      <label>맞춤 공차, 부재 사이 틈 (mm)<input name="M3_CLEAR" type="number" step="0.01" min="0" max="2" value="0.2" required></label>
+      <label>정렬 핀 지름 (mm)<input name="M3_PIN" type="number" step="0.1" min="1" max="12" value="4.0" required></label>
+      <label>작업대 가로 (mm)<input name="bed_w" type="number" step="1" min="100" max="3000" value="600" required></label>
+      <label>작업대 세로 (mm)<input name="bed_h" type="number" step="1" min="100" max="3000" value="400" required></label>
+      <fieldset>
+        <legend>축척</legend>
+        <label class="check"><input type="checkbox" name="s1" checked> 1대1 (실제 크기)</label>
+        <label class="check"><input type="checkbox" name="s2" checked> 1대2 시험 (먼저 싸게 끼워 보기)</label>
+      </fieldset>
+      <label class="wide">노드 후보 파일 (선택)
+        <input name="cand" type="file" accept=".json">
+        <span class="hint">비워 두면 기본 후보(드러냄 1 · 숨김 1)를 씁니다. 내 컴퓨터의 <code>후보목록.json</code>을 고르면 그것으로 만듭니다. 파일은 서버로 가지 않습니다.</span>
+      </label>
+      <div class="actions">
+        <button type="submit" id="go" disabled>준비 중…</button>
+        <span id="status" class="status">계산 도구를 불러오는 중입니다 (처음 한 번은 1분쯤 걸려요).</span>
+      </div>
+    </form>
+    <pre id="log" aria-live="polite"></pre>
+  </section>
+
+  <section class="card hidden" id="result">
+    <h2>2. 결과</h2>
+    <div id="warn"></div>
+    <table id="summary"></table>
+    <div class="actions">
+      <a id="download" class="button">전체 내려받기 (zip)</a>
+      <span class="hint">DXF · 판목록.csv · 조립순서도.png · 적층확인.3dm · 출력보고.json. 커프 보정은 이미 선에 들어가 있으니 레이저 프로그램에서 오프셋을 또 주지 마세요.</span>
+    </div>
+    <div id="gallery"></div>
+  </section>
+
+  <section class="card">
+    <h2>순서</h2>
+    <ol>
+      <li><b>공차시험편</b>을 먼저 자르고 커프·틈·핀 구멍을 잽니다.</li>
+      <li>그 값을 위에 넣고 다시 만듭니다.</li>
+      <li><b>1대2 시험</b>부터 잘라 끼워 보고, 그다음 1대1.</li>
+      <li>부재마다 판을 아래(01)부터 쌓아 핀에 꿰어 붙이고, 부재끼리는 조립순서도 순서대로 끼웁니다.</li>
+    </ol>
+    <p class="hint">자세한 설명: <a href="https://github.com/juhyeonglee-arch/tectonic-joints/blob/main/docs/M3_%EC%9E%91%EC%97%85%EC%A7%80%EC%8B%9C.md">M3 작업지시</a> · 소스: <a href="https://github.com/juhyeonglee-arch/tectonic-joints">GitHub</a></p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
