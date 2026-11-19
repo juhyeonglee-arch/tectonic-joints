@@ -1,0 +1,7 @@
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+shapely>=2.0
+ezdxf>=1.1
+rhino3dm>=8.0
+mapbox_earcut>=1.0

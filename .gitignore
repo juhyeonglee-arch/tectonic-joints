@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+test-output/
+out/
+*_out/
+# 개인 도면·재배포 금지 자료는 저장소에 넣지 않는다
+private/
+*.dwg
+.env
